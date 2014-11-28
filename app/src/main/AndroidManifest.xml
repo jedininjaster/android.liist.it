@@ -18,6 +18,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".postListActivity"
+            android:label="@string/title_post_list" >
+        </activity>
+        <activity
+            android:name=".postDetailActivity"
+            android:label="@string/title_post_detail"
+            android:parentActivityName=".postListActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.colliercode.liist.androidliistit.postListActivity" />
+        </activity>
     </application>
 
 </manifest>

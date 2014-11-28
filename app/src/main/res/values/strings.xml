@@ -4,5 +4,9 @@
     <string name="app_name">android.liist.it</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_post_list">posts</string>
+    <string name="title_post_detail">post Detail</string>
+    <string name="action_posts">posts</string>
+    <string name="action_fetch">fetch</string>
 
 </resources>

@@ -5,4 +5,12 @@
         android:title="@string/action_settings"
         android:orderInCategory="100"
         android:showAsAction="never" />
+    <item android:id="@+id/action_fetch"
+        android:title="@string/action_fetch"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
+    <item android:id="@+id/action_posts"
+        android:title="@string/action_posts"
+        android:orderInCategory="100"
+        android:showAsAction="never" />
 </menu>

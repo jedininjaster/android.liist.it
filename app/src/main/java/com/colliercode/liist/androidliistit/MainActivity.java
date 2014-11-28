@@ -1,28 +1,22 @@
 package com.colliercode.liist.androidliistit;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import org.json.JSONObject;
 
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class MainActivity extends Activity {
@@ -31,16 +25,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        String url = "http://10.0.2.2:3001/api/posts/";
-        System.out.println(url);
-
-
 
     }
 
@@ -57,12 +41,22 @@ public class MainActivity extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_fetch) {
+
+            String url = "http://10.0.2.2:3001/api/posts/";
+            System.out.println(url);
+            new DownloadTask().execute(url);
+
+            return true;
+        }else if (id == R.id.action_posts) {
+
+            Intent intent = new Intent(MainActivity.this, postListActivity.class);
+            startActivity(intent);
+
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     private class DownloadTask extends AsyncTask<String, Void, String>{
 
@@ -76,28 +70,50 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        protected void onPostExecute(String s) {
+        protected void onPostExecute(String result) {
             Log.i("Network", result);
+            try {
+                JSONObject obj = new JSONObject(result);
+                Log.d("My App", obj.toString());
+            } catch (Throwable t) {
+                Log.e("My App", "Could not parse malformed JSON: \"" + result + "\"");
+            }
         }
 
         private String loadFromNetwork(String urlString) throws IOException{
             InputStream stream = null;
             String str = "";
-
             try{
                 stream = downloadUrl(urlString);
-                str = readIt(stream, 500);
+                str = readIt(stream);
             } finally {
                 if (stream != null){
                     stream.close();
                 }
             }
+            return str;
         }
 
-        private InputStream downloadUrl(String urlString) {
+        private InputStream downloadUrl(String urlString) throws IOException{
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(15000);
+            conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            conn.connect();
+            InputStream stream = conn.getInputStream();
+            return stream;
+        }
 
-            //use stringbuilder
-
+        private String readIt(InputStream stream) throws IOException, UnsupportedEncodingException{
+            Reader reader = new InputStreamReader(stream, "UTF-8");
+            StringBuilder sb = new StringBuilder();
+            char[] buffer = new char[1];
+            while ((reader.read(buffer)) != -1){
+                sb.append(buffer);
+            }
+            return new String(sb);
         }
     }
 }
