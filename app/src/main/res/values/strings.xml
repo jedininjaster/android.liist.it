@@ -6,7 +6,7 @@
     <string name="action_settings">Settings</string>
     <string name="title_post_list">posts</string>
     <string name="title_post_detail">post Detail</string>
-    <string name="action_posts">posts</string>
+    <string name="action_posts">two pane layout</string>
     <string name="action_fetch">fetch</string>
 
 </resources>

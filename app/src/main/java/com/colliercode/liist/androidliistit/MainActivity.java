@@ -7,7 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -17,14 +20,20 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 public class MainActivity extends Activity {
+
+    ListView mListView;
+    ArrayList<Post> mPosts = new ArrayList<Post>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mListView = (ListView) findViewById(R.id.postsListView);
 
     }
 
@@ -43,12 +52,12 @@ public class MainActivity extends Activity {
         int id = item.getItemId();
         if (id == R.id.action_fetch) {
 
-            String url = "http://10.0.2.2:3001/api/posts/";
+            String url = "http://10.0.2.2:3001/posts/";
             System.out.println(url);
             new DownloadTask().execute(url);
 
             return true;
-        }else if (id == R.id.action_posts) {
+        } else if (id == R.id.action_posts) {
 
             Intent intent = new Intent(MainActivity.this, postListActivity.class);
             startActivity(intent);
@@ -56,6 +65,12 @@ public class MainActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    void setupAdapter(){
+
+        mListView.setAdapter(new ArrayAdapter<Post>(this, android.R.layout.simple_list_item_1, mPosts));
+
     }
 
     private class DownloadTask extends AsyncTask<String, Void, String>{
@@ -71,10 +86,25 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(String result) {
+
+            JSONObject mJsonObject = null;
+            JSONArray mJsonArray = null;
+
             Log.i("Network", result);
             try {
                 JSONObject obj = new JSONObject(result);
                 Log.d("My App", obj.toString());
+                mJsonArray = obj.getJSONArray("posts");
+                for(int i = 0; i < mJsonArray.length(); i++){
+                    JSONObject jsonObject = mJsonArray.getJSONObject(i);
+                    String postTitle = jsonObject.getString("title");
+                    String postContent = jsonObject.getString("content");
+                    Post post = new Post();
+                    post.mTitle = postTitle;
+                    post.mContent = postContent;
+                    mPosts.add(post);
+                }
+                setupAdapter();
             } catch (Throwable t) {
                 Log.e("My App", "Could not parse malformed JSON: \"" + result + "\"");
             }
