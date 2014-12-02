@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import org.json.JSONArray;
@@ -16,10 +15,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -69,18 +67,21 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    void setupAdapter(){
+    void setupAdapter() {
         mListView.setAdapter(new PostAdapter(this, R.layout.post_list_item, mPosts));
+//        for(int i = 0; i < mPosts.size(); i++ ){
+//
+//        }
     }
 
-    private class DownloadTask extends AsyncTask<String, Void, String>{
+    private class DownloadTask extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String... urls) {
-            try{
+            try {
                 //TODO: consider using an external http lib for calls, okhttp seems to have a bug in code below
                 return loadFromNetwork(urls[0]);
-            } catch (IOException e){
+            } catch (IOException e) {
                 return "error";
             }
         }
@@ -89,49 +90,70 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result) {
 
             //todo: tidy up
-            JSONObject mJsonObject = null;
-            JSONArray mJsonArray = null;
+            JSONArray mJsonArray;
+            JSONObject obj;
 
             Log.i("Network", result);
-            try {
-                JSONObject obj = new JSONObject(result);
-                Log.d("My App", obj.toString());
-                mJsonArray = obj.getJSONArray("posts");
-                for(int i = 0; i < mJsonArray.length(); i++){
 
-                    //do some null checks, u fu
+            try {
+                obj = new JSONObject(result);
+                Log.d("My App", obj.toString());
+            } catch (Throwable t) {
+                //was hitting this error for a while, consider reducing the scope of theis catch block
+                Log.e("My App", "Could not parse malformed JSON: " + result);
+                return;
+            }
+
+            try {
+                mJsonArray = obj.getJSONArray("posts");
+                for (int i = 0; i < mJsonArray.length(); i++) {
+
+                    //do some null checks, u fu, maybe
 
                     JSONObject jsonObject = mJsonArray.getJSONObject(i);
                     String postTitle = jsonObject.getString("title");
                     String postContent = jsonObject.getString("content");
+                    JSONArray imageUrls = jsonObject.getJSONArray("images");
+
                     Post post = new Post();
 
+                    //post images
+                    post.mImageUrls = new ArrayList<URL>();
+                    for (int j = 0; j < imageUrls.length(); j++) {
+                        JSONObject imageJSON = imageUrls.getJSONObject(j);
+                        URL url = new URL(imageJSON.getString("source"));
+                        post.mImageUrls.add(url);
+                    }
+
+                    //post other stuff
                     post.mTitle = postTitle;
                     post.mContent = postContent;
                     mPosts.add(post);
                 }
-                setupAdapter();
-            } catch (Throwable t) {
-                //was hitting this error for a while, consider reducing the scope of theis catch block
-                Log.e("My App", "Could not parse malformed JSON: " + result);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
             }
+
+            setupAdapter();
         }
 
-        private String loadFromNetwork(String urlString) throws IOException{
+        private String loadFromNetwork(String urlString) throws IOException {
             InputStream stream = null;
             String str = "";
-            try{
+            try {
                 stream = downloadUrl(urlString);
                 str = readIt(stream);
             } finally {
-                if (stream != null){
+                if (stream != null) {
                     stream.close();
                 }
             }
             return str;
         }
 
-        private InputStream downloadUrl(String urlString) throws IOException{
+        private InputStream downloadUrl(String urlString) throws IOException {
             URL url = new URL(urlString);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setReadTimeout(100000);
@@ -143,7 +165,7 @@ public class MainActivity extends Activity {
             return stream;
         }
 
-        private String readIt(InputStream stream) throws IOException, UnsupportedEncodingException{
+        private String readIt(InputStream stream) throws IOException, UnsupportedEncodingException {
             return convertStreamToString(stream);
         }
 
